@@ -8,7 +8,8 @@
  *   title: 我的歌单                       ← 可选，标题
  *   mode: listLoop                        ← 可选，默认播放模式
  *   autoplay: false                       ← 可选，是否自动播放
- *   不如见一面 | 海来阿木 & 单依纯 | _media/music/不如见一面-海来阿木&单依纯.mp3 | _media/music/cover.jpg
+ *   coverBase: music/covers               ← 可选，封面基础目录
+ *   不如见一面 | 海来阿木 & 单依纯 | _media/music/不如见一面-海来阿木&单依纯.mp3 | cover.jpg
  *   另一首歌 | 某歌手 | _media/music/xxx.mp3
  *   ```
  *
@@ -72,6 +73,20 @@
       '<circle cx="53" cy="98" r="10"/><circle cx="96" cy="85" r="10"/></g></svg>';
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s);
   }
+  function isExternalOrRootPath(path) {
+    return /^([a-z][a-z0-9+.-]*:|\/\/|\/|#)/i.test(path);
+  }
+  function joinMediaPath(base, path) {
+    if (!base || !path || isExternalOrRootPath(path)) return path;
+    var cleanBase = String(base).replace(/\/+$/, '');
+    var cleanPath = String(path).replace(/^\/+/, '');
+    if (!cleanBase) return cleanPath;
+    if (cleanPath === cleanBase || cleanPath.indexOf(cleanBase + '/') === 0) return cleanPath;
+    return cleanBase + '/' + cleanPath;
+  }
+  function cleanConfigValue(value) {
+    return String(value).replace(/\s+#.*$/, '').trim();
+  }
 
   // 系统配色偏好
   var mql = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
@@ -91,14 +106,16 @@
 
   // —— 解析 ```music 代码块文本 ——
   function parseBlock(text) {
-    var cfg = { title: '本地音乐', mode: 'listLoop', autoplay: false, theme: '', list: [] };
+    var cfg = { title: '本地音乐', mode: 'listLoop', autoplay: false, theme: '', audioBase: '', coverBase: '', list: [] };
     text.split('\n').forEach(function (raw) {
       var line = raw.trim();
       if (!line) return;
-      var m = line.match(/^(title|mode|autoplay|theme)\s*[:：]\s*(.+)$/i);
+      var m = line.match(/^(title|mode|autoplay|theme|audioBase|musicBase|coverBase)\s*[:：]\s*(.+)$/i);
       if (m && line.indexOf('|') === -1) {
-        var k = m[1].toLowerCase(), v = m[2].trim();
+        var k = m[1].toLowerCase(), v = cleanConfigValue(m[2]);
         if (k === 'autoplay') cfg.autoplay = /^(true|1|yes|on)$/i.test(v);
+        else if (k === 'audiobase' || k === 'musicbase') cfg.audioBase = v;
+        else if (k === 'coverbase') cfg.coverBase = v;
         else cfg[k] = v;
         return;
       }
@@ -107,6 +124,10 @@
       var t = { name: parts[0] || '', artist: parts[1] || '', url: parts[2] || '', cover: parts[3] || '' };
       if (!t.url && t.name) { t.url = t.name; t.name = t.url.split('/').pop(); } // 容错：只给了地址
       if (t.url) cfg.list.push(t);
+    });
+    cfg.list.forEach(function (t) {
+      t.url = joinMediaPath(cfg.audioBase, t.url);
+      t.cover = joinMediaPath(cfg.coverBase, t.cover);
     });
     return cfg;
   }

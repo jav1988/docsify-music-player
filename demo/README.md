@@ -8,8 +8,9 @@
 title: 示例歌单
 mode: listLoop
 theme: auto
-不如见一面 | 海来阿木 & 单依纯 | music/不如见一面.mp3 | music/covers/不如见一面.jpg
-贝加尔湖畔 | 李健 | music/贝加尔湖畔.mp3 | music/covers/贝加尔湖畔.jpg
+coverBase: music/covers
+不如见一面 | 海来阿木 & 单依纯 | music/不如见一面.mp3 | 不如见一面.jpg
+贝加尔湖畔 | 李健 | music/贝加尔湖畔.mp3 | 贝加尔湖畔.jpg
 野子 | 苏运莹 | music/野子.mp3
 ```
 
